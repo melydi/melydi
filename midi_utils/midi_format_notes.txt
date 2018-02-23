@@ -1,4 +1,0 @@
-(144, 21, ...) is A0, (144, 22, ...) is Bb0 ...
-third element of first element is velocity, velocity=0 means lift
-(176, 64, d, 0) is pedal, d is depth on [0, 64]
-time is second element (in ms)

@@ -57,8 +57,9 @@ def power_traces(framerate, data, min_frequency, num_octaves):
 	spectra = calculate_spectrogram(framerate, data, chunk_len, stride)
 	num_frequencies = num_octaves*12
 	log_frequencies = [np.log(min_frequency)+np.log(2)*(-1./24)]
-	log_frequencies.extend([np.log(min_frequency)+np.log(2)*((k+1./2)/12.0) for k in range(num_frequencies)])
+	log_frequencies += [np.log(min_frequency)+np.log(2)*((k+1./2)/12.0) for k in range(num_frequencies)]
 	boundary_indices = [np.exp(log_f)*chunk_len/float(framerate) for log_f in log_frequencies]
+	ipy.embed()
 	powers = lambda spectrum: [np.sum(spectrum[boundary_indices[i]:boundary_indices[i+1]]**2)/float(framerate)/chunk_len for i in range(len(boundary_indices)-1)]
 	power_traces = np.array([powers(spectrum) for spectrum in spectra])
 	permuted = zip(*power_traces)
@@ -70,7 +71,7 @@ if __name__=='__main__':
 	# frequency = dominant_frequency(framerate, data)
 	# print map_pitch(frequency)
 
-	framerate, data = load_audio('data/test.wav')
+	framerate, data = load_audio('data_old/test.wav')
 	c1 = 65.4; min_frequency = c1*2
 	power_traces = power_traces(framerate, data, min_frequency, 2)
 	import matplotlib.pyplot as plt

@@ -121,15 +121,6 @@ class MidiChordsParser():
 		self.index = new_i
 		return Chord(notes)
 
-def write_midi_events(in_file, out_file):
-		with open(in_file, 'r') as f:
-			lines = f.readlines()
-		events = []
-		for line in lines:
-			events.append(eval(line))
-		pygame.midi.init()
-		pygame.midi.Output.
-
 if __name__=='__main__':
 	parser = MidiChordsParser(sys.argv[1])
 	parser.next()

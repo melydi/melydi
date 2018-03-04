@@ -1,17 +1,5 @@
 import sys, os, mido, time, pickle
-
-possible_backends = ['mido.backends.pygame', 'mido.backends.rtmidi', 'mido.backends.portmidi', 'mido.backends.rtmidi_python', 'mido.backends.amidi']
-found_backend = False
-for backend in possible_backends:
-	try:
-		mido.set_backend(backend)
-		found_backend = True
-		break
-	except:
-		pass
-if not found_backend:
-	print "Error: could not find valid backend for mido."
-	exit(0)
+import midi_backends
 
 def write_output(messages, times, output_file):
 	"""Writes messages and times to a midi file."""
@@ -32,14 +20,13 @@ def write_output(messages, times, output_file):
 		mid.save(output_file)
 
 class MidiReader():
-	def __init__(self, midi_input='Digital Piano', midi_output='test.mid'):
+	def __init__(self, midi_input='Digital Piano'):
 		"""Determine input port/file and output file.
 
 		Arguments:
 		midi_input -- input filename or port name"""
 
 		self.input = midi_input
-		self.output = midi_output
 		self.messages = []
 		self.times = []
 
@@ -54,12 +41,12 @@ class MidiReader():
 				self.times.append(now-start_time)
 		except KeyboardInterrupt:
 			inport.close()
-			self.write_output()
 
-	def write_output(self):
+	def write_output(self, midi_output):
 		"""Write midi messages to a midi file."""
-		write_output(self.messages, self.times, self.output)
+		write_output(self.messages, self.times, midi_output)
 
 if __name__=='__main__':
 	reader = MidiReader()
 	reader.read()
+	reader.write_output('test.mid')

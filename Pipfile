@@ -16,6 +16,7 @@ pandas = "*"
 python-speech-features = "*"
 mido = "*"
 tensorflow = "*"
+cython = "*"
 
 
 [dev-packages]

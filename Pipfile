@@ -17,6 +17,8 @@ python-speech-features = "*"
 mido = "*"
 tensorflow = "*"
 cython = "*"
+ipykernel = "*"
+requests = "*"
 
 
 [dev-packages]

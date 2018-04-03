@@ -19,6 +19,9 @@ tensorflow = "*"
 cython = "*"
 ipykernel = "*"
 requests = "*"
+plotly = "*"
+pygame = "*"
+nbformat = "*"
 
 
 [dev-packages]

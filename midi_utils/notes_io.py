@@ -28,6 +28,20 @@ def read_chord(ioport):
 			chord.append(msg)
 	return chord
 
+def debug_io(port_string):
+	try:
+		port = mido.open_ioport(port_string)
+	except:
+		print "'{}' is not a valid port. Please change the midi port.".format(port_string)
+		exit(1)
+	while True:
+		print "Please play a chord."
+		chord = read_chord(port)
+		print "Your chord:"
+		note_processing.print_chord(chord)
+		print "Num notes:"
+		print len(chord)
+
 def save_chords_interactively(port_string, save_file):
 	try:
 		port = mido.open_ioport(port_string)
@@ -66,6 +80,7 @@ def print_chords_file(save_file):
 		note_processing.print_chord(chord)
 
 if __name__=='__main__':
-	save_chords_interactively('Digital Piano', 'data/chord_bank.pickle')
-	print "Printing chords file:"
-	print_chords_file('data/chord_bank.pickle')
+	debug_io('Digital Piano')
+	# save_chords_interactively('Digital Piano', 'data/chord_bank.pickle')
+	# print "Printing chords file:"
+	# print_chords_file('data/chord_bank.pickle')

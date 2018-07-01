@@ -8,20 +8,20 @@ fs, x = read(fname)
 x = x/max(abs(x))
 
 def STFT(x, w, H, N):
-	W = len(w)
-	w = w/max(w)
-	num_windows = int(np.floor((len(x)-W+1)/H))
-	Xs = []
-	m = (W+1)//2
-	m2 = W-m
-	for i in range(num_windows):
-		frame = w*x[i*H:i*H+W]
-		buff = np.zeros(N)
-		buff[:m] = frame[-m:]
-		buff[-m2:] = frame[:m2]
-		X = fft(buff)
-		Xs.append(X)
-	return np.array(Xs)
+    W = len(w)
+    w = w/max(w)
+    num_windows = int(np.floor((len(x)-W+1)/H))
+    Xs = []
+    m = (W+1)//2
+    m2 = W-m
+    for i in range(num_windows):
+        frame = w*x[i*H:i*H+W]
+        buff = np.zeros(N)
+        buff[:m] = frame[-m:]
+        buff[-m2:] = frame[:m2]
+        X = fft(buff)
+        Xs.append(X)
+    return np.array(Xs)
 
 M = 501
 N = 1024

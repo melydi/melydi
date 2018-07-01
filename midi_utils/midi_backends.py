@@ -11,10 +11,10 @@ for backend in possible_backends:
 	except:
 		pass
 if not found_backend:
-	print "Error: could not find valid backend for mido."
+	print ("Error: could not find valid backend for mido.")
 	exit(1)
 
 if __name__=='__main__':
-	print mido.get_input_names()
+	print (mido.get_input_names())
 	import IPython as ipy
 	ipy.embed()	

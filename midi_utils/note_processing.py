@@ -36,4 +36,4 @@ def get_chords(messages, times):
 
 def print_chord(chord):
 	notes = [convert_pitch(note) for note in sorted([n.note for n in chord])]
-	print ', '.join([note[1]+str(note[0]) for note in notes])
+	print (', '.join([note[1]+str(note[0]) for note in notes]))

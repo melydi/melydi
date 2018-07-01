@@ -40,7 +40,7 @@ def debug_io(port_string):
 		print("Your chord:")
 		note_processing.print_chord(chord)
 		print("Num notes:")
-		print len(chord)
+		print(len(chord))
 
 
 def save_chords_interactively(port_string, save_file):

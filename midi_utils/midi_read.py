@@ -65,7 +65,7 @@ if __name__=='__main__':
     parser.add_argument('-i', '--midi_input', help='Midi input name', required=False, default='Digital Piano')
     parser.add_argument('-f', '--filename', help='Filename without extension under which \
             recording should be saved', default='test')
-    parser.add_argument('r', '--record_audio', type=bool, default=False, help='If true, will record audio through microphone with sox')
+    parser.add_argument('-r', '--record_audio', type=bool, default=False, help='If true, will record audio through microphone with sox')
     args = parser.parse_args()
 
     reader = MidiReader(midi_input=args.midi_input)

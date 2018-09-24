@@ -1,5 +1,18 @@
 import sys, os, mido, time, pickle
+import argparse
+import subprocess
+import signal
 import midi_backends
+
+class GracefulKiller:
+  kill_now = False
+  def __init__(self):
+    signal.signal(signal.SIGINT, self.exit_gracefully)
+    signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+  def exit_gracefully(self,signum, frame):
+    self.kill_now = True
+
 
 def write_output(messages, times, output_file):
     """Writes messages and times to a midi file."""
@@ -38,6 +51,7 @@ class MidiReader():
             for msg in inport:
                 now = time.time()
                 self.messages.append(msg)
+                print (msg)
                 self.times.append(now-start_time)
         except KeyboardInterrupt:
             inport.close()
@@ -47,6 +61,16 @@ class MidiReader():
         write_output(self.messages, self.times, midi_output)
 
 if __name__=='__main__':
-    reader = MidiReader()
+    parser = argparse.ArgumentParser(description='Record midi and audio')
+    parser.add_argument('-i', '--midi_input', help='Midi input name', required=False, default='Digital Piano')
+    parser.add_argument('-f', '--filename', help='Filename without extension under which \
+            recording should be saved', default='test')
+    parser.add_argument('r', '--record_audio', type=bool, default=False, help='If true, will record audio through microphone with sox')
+    args = parser.parse_args()
+
+    reader = MidiReader(midi_input=args.midi_input)
+    if args.record_audio:
+        subprocess.Popen(['sox', '-d', '{}.wav'.format(args.filename)])
+    time.sleep(1)
     reader.read()
-    reader.write_output('test.mid')
+    reader.write_output('{}.mid'.format(args.filename))

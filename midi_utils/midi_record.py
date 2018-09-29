@@ -4,15 +4,6 @@ import subprocess
 import signal
 import midi_backends
 
-class GracefulKiller:
-  kill_now = False
-  def __init__(self):
-    signal.signal(signal.SIGINT, self.exit_gracefully)
-    signal.signal(signal.SIGTERM, self.exit_gracefully)
-
-  def exit_gracefully(self,signum, frame):
-    self.kill_now = True
-
 
 def write_output(messages, times, output_file):
     """Writes messages and times to a midi file."""
@@ -32,21 +23,27 @@ def write_output(messages, times, output_file):
             track.append(m)
         mid.save(output_file)
 
-class MidiReader():
+class MidiRecorder():
     def __init__(self, midi_input='Digital Piano'):
-        """Determine input port/file and output file.
+        """
+        Class to record midi events from a midi input device e.g. digital piano
+        and write to a midi file.
 
-        Arguments:
-        midi_input -- input filename or port name"""
-
+        Args:
+            midi_input (str): input filename or port name
+        
+        """
         self.input = midi_input
         self.messages = []
         self.times = []
 
-    def read(self):
-        """Record midi events until a keyboard interrupt."""
+    def record(self):
+        """
+        Record midi events until a keyboard interrupt.
+        """
         inport = mido.open_input(self.input)
         start_time = time.time()
+        print ("Midi recording started") 
         try:
             for msg in inport:
                 now = time.time()
@@ -57,20 +54,33 @@ class MidiReader():
             inport.close()
 
     def write_output(self, midi_output):
-        """Write midi messages to a midi file."""
+        """
+        Write midi messages to a midi file.
+        
+        Args:
+            midi_output (str): Midi output file name
+
+        """
         write_output(self.messages, self.times, midi_output)
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Record midi and audio')
     parser.add_argument('-i', '--midi_input', help='Midi input name', required=False, default='Digital Piano')
     parser.add_argument('-f', '--filename', help='Filename without extension under which \
             recording should be saved', default='test')
-    parser.add_argument('-r', '--record_audio', type=bool, default=False, help='If true, will record audio through microphone with sox')
+    parser.add_argument('-r', '--record_audio', type=bool, default=False, help='If True, will record audio through microphone with sox')
+    parser.add_argument('-s', '--synthesize', type=bool, default=True, help='If True, will use fluidsynth to synthesize the recorded midi')
+    parser.add_argument('-sf', '--soundfont', type=str, default='/usr/local/Cellar/fluid-synth/1.1.11/share/soundfonts/default.sf2', \
+            help='Soundfont filename full path')
     args = parser.parse_args()
 
-    reader = MidiReader(midi_input=args.midi_input)
+    recorder = MidiRecorder(midi_input=args.midi_input)
     if args.record_audio:
         subprocess.Popen(['sox', '-d', '{}.wav'.format(args.filename)])
-    time.sleep(1)
-    reader.read()
-    reader.write_output('{}.mid'.format(args.filename))
+    recorder.record()
+    midi_filename = '{}.mid'.format(args.filename)
+    recorder.write_output(midi_filename)
+    if args.synthesize:
+        synth_filename = '{}_synth.wav'.format(args.filename)
+        subprocess.call(['fluidsynth', '-ni', args.soundfont, midi_filename, '-F', synth_filename, '-r', '44100'])

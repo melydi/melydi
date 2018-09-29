@@ -1,8 +1,22 @@
+
+"""
+Example usage:
+
+python midi_record.py \
+    -i 'Digital Piano USB-MIDI' \
+    -ins piano \
+    -mt melody \
+    -fp c_major_scale
+
+"""
 import sys, os, mido, time, pickle
+import uuid
 import argparse
 import subprocess
 import signal
 import midi_backends
+import datetime
+import json
 
 
 def write_output(messages, times, output_file):
@@ -67,20 +81,55 @@ class MidiRecorder():
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Record midi and audio')
     parser.add_argument('-i', '--midi_input', help='Midi input name', required=False, default='Digital Piano')
-    parser.add_argument('-f', '--filename', help='Filename without extension under which \
-            recording should be saved', default='test')
+    parser.add_argument('-fp', '--filename_prefix', help='Filename prefix', default='recording')
     parser.add_argument('-r', '--record_audio', type=bool, default=False, help='If True, will record audio through microphone with sox')
     parser.add_argument('-s', '--synthesize', type=bool, default=True, help='If True, will use fluidsynth to synthesize the recorded midi')
-    parser.add_argument('-sf', '--soundfont', type=str, default='/usr/local/Cellar/fluid-synth/1.1.11/share/soundfonts/default.sf2', \
-            help='Soundfont filename full path')
+    parser.add_argument('-sfd', '--soundfonts_dir', type=str, default='../soundfonts', \
+            help='Path to directory where soundfonts are saved')
+    parser.add_argument('-od', '--output_dir', type=str, default='../recorded_data', \
+            help='Path to directory where soundfonts are saved')
+    parser.add_argument('-sfn', '--soundfont_name', type=str, default='general_user_v1.471', \
+            help='Soundfont name without file ending, e.g. general_user_v1.471')
+    parser.add_argument('-ins', '--instrument', type=str, required=True, help='Instrument type, e.g. piano or violin')
+    parser.add_argument('-mt', '--music_type', type=str, required=True, help='Music type, e.g. melody or harmony')
     args = parser.parse_args()
+
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
 
     recorder = MidiRecorder(midi_input=args.midi_input)
     if args.record_audio:
         subprocess.Popen(['sox', '-d', '{}.wav'.format(args.filename)])
     recorder.record()
-    midi_filename = '{}.mid'.format(args.filename)
-    recorder.write_output(midi_filename)
+
+    file_uuid = str(uuid.uuid4())
+    base_filename = '{}_{}'.format(args.filename_prefix, file_uuid)
+
+
+    midi_filename = '{}.mid'.format(base_filename)
+    midi_file_path = os.path.join(args.output_dir, midi_filename)
+    recorder.write_output(midi_file_path)
+
     if args.synthesize:
-        synth_filename = '{}_synth.wav'.format(args.filename)
-        subprocess.call(['fluidsynth', '-ni', args.soundfont, midi_filename, '-F', synth_filename, '-r', '44100'])
+        synth_filename = '{}_synth_{}.wav'.format(base_filename, args.soundfont_name)
+        synth_file_path = os.path.join(args.output_dir, synth_filename)
+        soundfont_path = os.path.join(args.soundfonts_dir, '{}.sf2'.format(args.soundfont_name))
+        print (soundfont_path)
+        subprocess.call(['fluidsynth', '-ni', soundfont_path, midi_file_path, '-F', synth_file_path, '-r', '44100'])
+
+    meta_data = {}
+    print(datetime.datetime.now())
+    meta_data['uuid'] = file_uuid
+    meta_data['timestamp'] = str(datetime.datetime.now())
+    meta_data['filename_prefix'] = args.filename_prefix
+    meta_data['instrument'] = args.instrument
+    meta_data['music_type'] = args.music_type
+    meta_data['tempo'] = '<>'
+    meta_data['synthetic_versions'] = [args.soundfont_name]
+
+    with open('{}.json'.format(os.path.join(args.output_dir, base_filename)), 'w') as file:
+     file.write(json.dumps(meta_data, indent=4)) 
+
+
+
+

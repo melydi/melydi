@@ -1,3 +1,4 @@
+
 import numpy as np
 from scipy.io.wavfile import read, write
 import matplotlib.pyplot as plt
@@ -151,10 +152,11 @@ if __name__=='__main__':
     #     plt.plot(trace)
     # ipy.embed()
 
-    fname = '/Users/rex/src/melydi/data_old/piano_notes/one_octave/A2.wav'
+    fname = 'data_old/piano_notes/one_octave/A2.wav'
     fs, x = read(fname)
+    print (fs)
     x = np.array(x, np.float)
     x /= max(abs(x))
     ton = get_onset(fs, x)
     f0 = get_f0(fs, x[int(ton*fs):int(ton*fs)+2048])
-    print f0
+    print (f0)

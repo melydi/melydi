@@ -98,7 +98,7 @@ def is_peak(vals, index, lookaround=5):
 def irregularity_statistic(l):
     l_std = np.std(l)
     l_mean = np.mean(l)
-    return l_std/l_mean
+    return l_mean, l_std, l_std/l_mean
 
 def peak_quality(list_of_peaks):
     """Quantify the 'peakness' of the peak. WIP
@@ -106,13 +106,13 @@ def peak_quality(list_of_peaks):
     #ideas:
     # define this based on just the peak values (not based on the spectrum)
     # pass
-    all_x_values, all_y_values = sorted(zip(*list_of_peaks), key=lambda item: item[0])
+    all_x_values, all_y_values = sorted(zip(*list_of_peaks), key=lambda item: item[0], reverse=True)
     distances = [all_x_values[i+1]-all_x_values[i] for i in range(len(all_x_values)-1)]
-    delta_x_metric = irregularity_statistic(distances)
-    print(delta_x_metric)
-    slopes = [(all_y_values[i+1]-all_y_values[i])/(all_x_values[i+1]-all_x_values[i]) for i in range(len(all_x_values)-1)]
-    slopes_metric = irregularity_statistic(slopes)
-    print(slopes_metric)
+    delta_x_mean, delta_x_std, delta_x_metric = irregularity_statistic(distances)
+    print("Delta x: mean: {}, std: {}, std/mean: {}".format(delta_x_mean, delta_x_std, delta_x_metric))
+    slopes = [np.absolute((all_y_values[i+1]-all_y_values[i])/(all_x_values[i+1]-all_x_values[i])) for i in range(len(all_x_values)-1)]
+    slopes_mean, slopes_std, slopes_metric = irregularity_statistic(slopes)
+    print("Slopes: mean: {}, std: {}, std/mean: {}".format(slopes_mean, slopes_std, slopes_metric))
 
 def get_peaks(fs, x, threshold=-80):
     width = int(2**np.ceil(np.log(len(x))/np.log(2)))
@@ -133,14 +133,14 @@ def get_peaks(fs, x, threshold=-80):
             dB = out[2]-out[1]**2/4/out[0]
             f_peaks.append(f0)
             dBs.append(dB)
-            list_of_peaks.append((i, f0))
+            list_of_peaks.append((f0, dB))
             # f_peaks.append(freq[i])
             # dBs.append(mY[i])
     peak_quality(list_of_peaks)
     plt.plot(freq, mY)
     plt.plot(f_peaks, dBs, 'r+')
     plt.show()
-    return np.array(f_peaks), np.array(dBs)
+    return list_of_peaks, np.array(f_peaks), np.array(dBs)
 
 def newtons_method(f, guess, delta=1e-12, iterations=3):
     for _ in range(iterations):
@@ -152,7 +152,7 @@ def newtons_method(f, guess, delta=1e-12, iterations=3):
     return guess
 
 def get_f0(fs, x):
-    f_peaks, dBs = get_peaks(fs, x)
+    list_of_peaks, f_peaks, dBs = get_peaks(fs, x)
     # import IPython as ipy; ipy.embed()
     diffs = [f_peaks[i+1]-f_peaks[i] for i in range(len(f_peaks)-1)]
     # plt.hist(diffs)

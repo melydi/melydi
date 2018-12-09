@@ -96,6 +96,25 @@ def is_peak(vals, index, lookaround=5):
         return False
     return all(vals[index]>vals[index-lookaround:index]) and all(vals[index]>vals[index+1:index+lookaround+1])
 
+def irregularity_statistic(l):
+    l_std = np.std(l)
+    l_mean = np.mean(l)
+    return l_std/l_mean
+
+def peak_quality(list_of_peaks):
+    """Quantify the 'peakness' of the peak. WIP
+    |list_of_peak| list of tuples of the form (x, y)"""
+    #ideas:
+    # define this based on just the peak values (not based on the spectrum)
+    # pass
+    all_x_values, all_y_values = sorted(zip(*list_of_peaks), key=lambda item: item[0])
+    distances = [all_x_values[i+1]-all_x_values[i] for i in range(len(all_x_values)-1)]
+    delta_x_metric = irregularity_statistic(distances)
+    print(delta_x_metric)
+    slopes = [(all_y_values[i+1]-all_y_values[i])/(all_x_values[i+1]-all_x_values[i]) for range(len(all_x_values)-1)]
+    slopes_metric = irregularity_statistic(slopes)
+    print(slopes_metric)
+
 def get_peaks(fs, x, threshold=-80):
     width = int(2**np.ceil(np.log(len(x))/np.log(2)))
     width = 2048*8
@@ -104,6 +123,7 @@ def get_peaks(fs, x, threshold=-80):
     mY = mY-max(mY)
     f_peaks = []
     dBs = []
+    list_of_peaks = []
     for i in range(1,len(freq)-1):
         if is_peak(mY, i) and mY[i]>threshold:
             fs = np.array(freq[i-1:i+2])
@@ -114,6 +134,7 @@ def get_peaks(fs, x, threshold=-80):
             dB = out[2]-out[1]**2/4/out[0]
             f_peaks.append(f0)
             dBs.append(dB)
+            list_of_peaks.append((i, f0))
             # f_peaks.append(freq[i])
             # dBs.append(mY[i])
     plt.plot(freq, mY)
@@ -152,7 +173,7 @@ if __name__=='__main__':
     #     plt.plot(trace)
     # ipy.embed()
 
-    fname = 'data_old/piano_notes/one_octave/A2.wav'
+    fname = '../data_old/piano_notes/one_octave/A2.wav'
     fs, x = read(fname)
     print (fs)
     x = np.array(x, np.float)

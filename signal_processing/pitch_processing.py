@@ -112,6 +112,7 @@ def peak_quality(list_of_peaks):
     print("Delta x: mean: {}, std: {}, std/mean: {}".format(delta_x_mean, delta_x_std, delta_x_metric))
     slopes = [np.absolute((all_y_values[i+1]-all_y_values[i])/(all_x_values[i+1]-all_x_values[i])) for i in range(len(all_x_values)-1)]
     slopes_mean, slopes_std, slopes_metric = irregularity_statistic(slopes)
+    print(slopes)
     print("Slopes: mean: {}, std: {}, std/mean: {}".format(slopes_mean, slopes_std, slopes_metric))
 
 def get_peaks(fs, x, threshold=-80):
@@ -162,6 +163,38 @@ def get_f0(fs, x):
     # f = lambda omega: sum(np.cos(2*np.pi*omega*f_peaks)*dBs)
     # f0 = 1.0/newtons_method(f, guess)
     return f0
+
+def detect_outliers(data):
+    """
+    Find outliers and return their indices by computing box plot with whiskers
+    marking data points that are 1.5 * box_width above 75th percentile or 
+    1.5 * box_width below 25th percentile as outliers.
+    Args:
+        data: 1-D list of numeric values
+
+    Returns:
+        outlier_indices: indices of outliers in data
+    """
+    sorted_data = sorted(data)
+    print (sorted_data)
+    idx_25 = int(np.round(len(sorted_data)/4))
+    idx_75 = int(np.round(3*len(sorted_data)/4))
+
+    box_wd = sorted_data[idx_75] - sorted_data[idx_25]
+    whisk_top = sorted_data[idx_75] + 1.5 * box_wd
+    whisk_bot = sorted_data[idx_25] - 1.5 * box_wd
+
+    print (box_wd)
+    print (whisk_top)
+    print (whisk_bot)
+    outlier_indices = []
+    for i in range(len(data)):
+        if data[i] < whisk_bot or data[i] > whisk_top:
+            outlier_indices.append(i)
+    return outlier_indices
+
+
+
 
 if __name__=='__main__':
     # framerate, data = load_audio('data_old/test.wav')

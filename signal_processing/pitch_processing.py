@@ -1,4 +1,3 @@
-
 import numpy as np
 from scipy.io.wavfile import read, write
 import matplotlib.pyplot as plt
@@ -111,7 +110,7 @@ def peak_quality(list_of_peaks):
     distances = [all_x_values[i+1]-all_x_values[i] for i in range(len(all_x_values)-1)]
     delta_x_metric = irregularity_statistic(distances)
     print(delta_x_metric)
-    slopes = [(all_y_values[i+1]-all_y_values[i])/(all_x_values[i+1]-all_x_values[i]) for range(len(all_x_values)-1)]
+    slopes = [(all_y_values[i+1]-all_y_values[i])/(all_x_values[i+1]-all_x_values[i]) for i in range(len(all_x_values)-1)]
     slopes_metric = irregularity_statistic(slopes)
     print(slopes_metric)
 
@@ -137,6 +136,7 @@ def get_peaks(fs, x, threshold=-80):
             list_of_peaks.append((i, f0))
             # f_peaks.append(freq[i])
             # dBs.append(mY[i])
+    peak_quality(list_of_peaks)
     plt.plot(freq, mY)
     plt.plot(f_peaks, dBs, 'r+')
     plt.show()

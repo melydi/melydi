@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import IPython as ipy
 from scipy.signal import get_window
 from sklearn.cluster import KMeans
+import scipy
 
 MAX_FREQUENCY = 10e3
 
@@ -138,9 +139,9 @@ def get_peaks(fs, x, threshold=-80):
             # f_peaks.append(freq[i])
             # dBs.append(mY[i])
     peak_quality(list_of_peaks)
-    plt.plot(freq, mY)
-    plt.plot(f_peaks, dBs, 'r+')
-    plt.show()
+    # plt.plot(freq, mY)
+    # plt.plot(f_peaks, dBs, 'r+')
+    # plt.show()
     return list_of_peaks, np.array(f_peaks), np.array(dBs)
 
 def newtons_method(f, guess, delta=1e-12, iterations=3):
@@ -154,10 +155,11 @@ def newtons_method(f, guess, delta=1e-12, iterations=3):
 
 def get_f0(fs, x):
     list_of_peaks, f_peaks, dBs = get_peaks(fs, x)
-    km = KMeans(n_clusters=2)
+    km = KMeans()
     delta_fs = np.array([f_peaks[i+1]-f_peaks[i] for i in range(len(f_peaks)-1)])
-    km.fit(delta_fs.reshape(-1, 1))
-    f0 = max(km.cluster_centers_)
+    labels = km.fit_predict(delta_fs.reshape(-1, 1))
+    mode = scipy.stats.mode(labels)[0][0]
+    f0 = km.cluster_centers_[mode][0]
     return f0
 
 def detect_outliers(data):
@@ -184,22 +186,9 @@ def detect_outliers(data):
             outlier_indices.append(i)
     return outlier_indices
 
-
-
-
 if __name__=='__main__':
-    # framerate, data = load_audio('data_old/test.wav')
-    # c1 = 65.4; min_frequency = c1*2
-    # power_traces = power_traces(framerate, data, min_frequency, 2)
-    # import matplotlib.pyplot as plt
-    # plt.ion()
-    # for trace in power_traces:
-    #     plt.plot(trace)
-    # ipy.embed()
-
     fname = '../data_old/piano_notes/one_octave/A2.wav'
     fs, x = read(fname)
-    print (fs)
     x = np.array(x, np.float)
     x /= max(abs(x))
     ton = get_onset(fs, x)

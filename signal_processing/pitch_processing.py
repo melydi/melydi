@@ -3,6 +3,7 @@ from scipy.io.wavfile import read, write
 import matplotlib.pyplot as plt
 import IPython as ipy
 from scipy.signal import get_window
+from sklearn.cluster import KMeans
 
 MAX_FREQUENCY = 10e3
 
@@ -153,14 +154,10 @@ def newtons_method(f, guess, delta=1e-12, iterations=3):
 
 def get_f0(fs, x):
     list_of_peaks, f_peaks, dBs = get_peaks(fs, x)
-    # import IPython as ipy; ipy.embed()
-    diffs = [f_peaks[i+1]-f_peaks[i] for i in range(len(f_peaks)-1)]
-    # plt.hist(diffs)
-    # plt.show()
-    guess = np.median(diffs)
-    f0 = guess
-    # f = lambda omega: sum(np.cos(2*np.pi*omega*f_peaks)*dBs)
-    # f0 = 1.0/newtons_method(f, guess)
+    km = KMeans(n_clusters=2)
+    delta_fs = np.array([f_peaks[i+1]-f_peaks[i] for i in range(len(f_peaks)-1)])
+    km.fit(delta_fs.reshape(-1, 1))
+    f0 = max(km.cluster_centers_)
     return f0
 
 def detect_outliers(data):

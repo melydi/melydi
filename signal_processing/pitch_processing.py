@@ -153,13 +153,18 @@ def newtons_method(f, guess, delta=1e-12, iterations=3):
         guess = out[1]/(-2*out[0])
     return guess
 
-def get_f0(fs, x):
-    list_of_peaks, f_peaks, dBs = get_peaks(fs, x)
+def kmeans_f0(list_of_peaks):
+    f_peaks = zip(*list_of_peaks)[0]
     km = KMeans()
     delta_fs = np.array([f_peaks[i+1]-f_peaks[i] for i in range(len(f_peaks)-1)])
     labels = km.fit_predict(delta_fs.reshape(-1, 1))
     mode = scipy.stats.mode(labels)[0][0]
     f0 = km.cluster_centers_[mode][0]
+    return f0
+
+def get_f0(fs, x):
+    list_of_peaks, f_peaks, dBs = get_peaks(fs, x)
+    f0 = kmeans_f0(list_of_peaks)
     return f0
 
 def detect_outliers(data):

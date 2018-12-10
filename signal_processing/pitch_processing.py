@@ -98,7 +98,7 @@ def is_peak(vals, index, lookaround=5):
 def irregularity_statistic(l):
     l_std = np.std(l)
     l_mean = np.mean(l)
-    return l_mean, l_std, l_std/l_mean
+    return l_mean, l_std
 
 def peak_quality(list_of_peaks):
     """Quantify the 'peakness' of the peak. WIP
@@ -108,12 +108,11 @@ def peak_quality(list_of_peaks):
     # pass
     all_x_values, all_y_values = sorted(zip(*list_of_peaks), key=lambda item: item[0], reverse=True)
     distances = [all_x_values[i+1]-all_x_values[i] for i in range(len(all_x_values)-1)]
-    delta_x_mean, delta_x_std, delta_x_metric = irregularity_statistic(distances)
-    print("Delta x: mean: {}, std: {}, std/mean: {}".format(delta_x_mean, delta_x_std, delta_x_metric))
+    delta_x_mean, delta_x_std = irregularity_statistic(distances)
+    print("Delta x: mean: {}, std: {}".format(delta_x_mean, delta_x_std))
     slopes = [np.absolute((all_y_values[i+1]-all_y_values[i])/(all_x_values[i+1]-all_x_values[i])) for i in range(len(all_x_values)-1)]
-    slopes_mean, slopes_std, slopes_metric = irregularity_statistic(slopes)
-    print(slopes)
-    print("Slopes: mean: {}, std: {}, std/mean: {}".format(slopes_mean, slopes_std, slopes_metric))
+    slopes_mean, slopes_std = irregularity_statistic(slopes)
+    print("Slopes: mean: {}, std: {}".format(slopes_mean, slopes_std))
 
 def get_peaks(fs, x, threshold=-80):
     width = int(2**np.ceil(np.log(len(x))/np.log(2)))
@@ -167,7 +166,7 @@ def get_f0(fs, x):
 def detect_outliers(data):
     """
     Find outliers and return their indices by computing box plot with whiskers
-    marking data points that are 1.5 * box_width above 75th percentile or 
+    marking data points that are 0.5 * box_width above 75th percentile or 
     1.5 * box_width below 25th percentile as outliers.
     Args:
         data: 1-D list of numeric values
@@ -176,17 +175,12 @@ def detect_outliers(data):
         outlier_indices: indices of outliers in data
     """
     sorted_data = sorted(data)
-    print (sorted_data)
     idx_25 = int(np.round(len(sorted_data)/4))
     idx_75 = int(np.round(3*len(sorted_data)/4))
 
     box_wd = sorted_data[idx_75] - sorted_data[idx_25]
-    whisk_top = sorted_data[idx_75] + 1.5 * box_wd
-    whisk_bot = sorted_data[idx_25] - 1.5 * box_wd
-
-    print (box_wd)
-    print (whisk_top)
-    print (whisk_bot)
+    whisk_top = sorted_data[idx_75] + 0.5 * box_wd
+    whisk_bot = sorted_data[idx_25] - 0.5 * box_wd
     outlier_indices = []
     for i in range(len(data)):
         if data[i] < whisk_bot or data[i] > whisk_top:

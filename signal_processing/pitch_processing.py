@@ -33,16 +33,12 @@ def dominant_frequency(framerate, data):
 def pitch_to_frequency(pitch):
     note = pitch[:-1]
     octave = int(pitch[-1])
-    note_order_flats = ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b']
-    note_order_sharps = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
-    try:
-        note_index = note_order_sharps.index(note)
-    except:
-        note_index = note_order_flats.index(note)
+    note_order = [('c'), ('db', 'c#', 'cs'), ('d'), ('eb', 'd#', 'ds'), ('e'), ('f'), ('gb', 'f#', 'fs'), ('g'), ('ab', 'g#', 'gs'), ('a'), ('bb', 'a#', 'as'), ('b')]
+    note_index = [i for i in range(len(note_order)) if note in note_order[i]][0]
     c1 = 65.4
     pitch_frequency = c1*2**(octave-1+float(note_index)/12)
     return pitch_frequency
-    
+
 def nearest_pitch(frequency):
     # generate pitch dictionary
     note_order = ['c', ('db', 'c#'), 'd', ('eb', 'd#'), 'e', 'f', ('gb', 'f#'), 'g', ('ab', 'g#'), 'a', ('bb', 'a#'), 'b']
@@ -186,9 +182,12 @@ def newtons_method(f, guess, delta=1e-12, iterations=3):
 
 def kmeans_f0(list_of_peaks):
     f_peaks = zip(*list_of_peaks)[0]
-    km = KMeans(n_clusters=4)
+    km = KMeans(n_clusters=min(len(f_peaks)-1, 4))
     delta_fs = np.array([f_peaks[i+1]-f_peaks[i] for i in range(len(f_peaks)-1)])
-    labels = km.fit_predict(delta_fs.reshape(-1, 1))
+    try:
+        labels = km.fit_predict(delta_fs.reshape(-1, 1))
+    except:
+        import IPython as ipy; ipy.embed()
     # import IPython as ipy; ipy.embed()
     mode = scipy.stats.mode(labels)[0][0]
     f0 = km.cluster_centers_[mode][0]
@@ -229,9 +228,19 @@ def f0_from_file(fname):
     x /= max(abs(x))
     ton = get_onset(fs, x)
     f0 = get_f0(fs, x[int(ton*fs):int(ton*fs)+2048])
-    return os.path.basename(fname), f0
+    true_f0 = pitch_to_frequency(os.path.basename(fname).split('.')[0])
+    return {'true_freq': true_f0, 'estimated_freq': f0}
 
 if __name__=='__main__':
     folder = '/Users/rex/src/melydi/data_old/piano_notes/5_octaves'
+    true_freqs = []
+    estimated_freqs = []
     for fname in os.listdir(folder):
-        print(f0_from_file(os.path.join(folder, fname)))
+        datum = f0_from_file(os.path.join(folder, fname))
+        true_freqs.append(datum['true_freq'])
+        estimated_freqs.append(datum['estimated_freq'])
+    plt.loglog(true_freqs, estimated_freqs, 'r+')
+    plt.title('Correlation between Actual and Estimated f0')
+    plt.xlabel('Actual f0')
+    plt.ylabel('Estimated f0')
+    plt.show()

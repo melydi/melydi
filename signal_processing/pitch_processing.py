@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import IPython as ipy
 from scipy.signal import get_window
 from sklearn.cluster import KMeans
-import scipy
+import scipy, os
 
 MAX_FREQUENCY = 10e3
 
@@ -92,10 +92,24 @@ def spectrum(fs, x, width):
     freq = np.arange(width)[:l2+1]*float(fs)/width
     return freq, mY, pY
 
-def is_peak(vals, index, lookaround=5):
+lookaround = 5
+
+def is_local_max(vals, index):
+    center_vals = vals[index]
+    local_vals = vals[index-lookaround:index+lookaround]
+    return all(vals[index]>=local_vals)
+
+def has_monotomic_slope(vals, index):
+    slopes = vals[index-lookaround+1:index+lookaround+1]-vals[index-lookaround:index+lookaround]
+    slope_range = abs(np.mean(slopes)) + np.std(slopes)
+    slope_buffer = slope_range/10
+    return all([slopes[i+1]<slopes[i]+slope_buffer for i in range(len(slopes)-1)])
+
+def is_peak(vals, index):
     if index<lookaround or index>len(vals)-lookaround-1:
         return False
-    return all(vals[index]>vals[index-lookaround:index]) and all(vals[index]>vals[index+1:index+lookaround+1])
+    conditions = [is_local_max, has_monotomic_slope]
+    return all([condition(vals, index) for condition in conditions])
 
 def irregularity_statistic(l):
     l_std = np.std(l)
@@ -111,10 +125,10 @@ def peak_quality(list_of_peaks):
     all_x_values, all_y_values = sorted(zip(*list_of_peaks), key=lambda item: item[0], reverse=True)
     distances = [all_x_values[i+1]-all_x_values[i] for i in range(len(all_x_values)-1)]
     delta_x_mean, delta_x_std = irregularity_statistic(distances)
-    print("Delta x: mean: {}, std: {}".format(delta_x_mean, delta_x_std))
+    # print("Delta x: mean: {}, std: {}".format(delta_x_mean, delta_x_std))
     slopes = [np.absolute((all_y_values[i+1]-all_y_values[i])/(all_x_values[i+1]-all_x_values[i])) for i in range(len(all_x_values)-1)]
     slopes_mean, slopes_std = irregularity_statistic(slopes)
-    print("Slopes: mean: {}, std: {}".format(slopes_mean, slopes_std))
+    # print("Slopes: mean: {}, std: {}".format(slopes_mean, slopes_std))
 
 def get_peaks(fs, x, threshold=-80):
     width = int(2**np.ceil(np.log(len(x))/np.log(2)))
@@ -138,10 +152,10 @@ def get_peaks(fs, x, threshold=-80):
             list_of_peaks.append((f0, dB))
             # f_peaks.append(freq[i])
             # dBs.append(mY[i])
-    peak_quality(list_of_peaks)
-    # plt.plot(freq, mY)
-    # plt.plot(f_peaks, dBs, 'r+')
-    # plt.show()
+    # peak_quality(list_of_peaks)
+    plt.plot(freq, mY, 'b.')
+    plt.plot(f_peaks, dBs, 'r+')
+    plt.show()
     return list_of_peaks, np.array(f_peaks), np.array(dBs)
 
 def newtons_method(f, guess, delta=1e-12, iterations=3):
@@ -158,6 +172,7 @@ def kmeans_f0(list_of_peaks):
     km = KMeans()
     delta_fs = np.array([f_peaks[i+1]-f_peaks[i] for i in range(len(f_peaks)-1)])
     labels = km.fit_predict(delta_fs.reshape(-1, 1))
+    # import IPython as ipy; ipy.embed()
     mode = scipy.stats.mode(labels)[0][0]
     f0 = km.cluster_centers_[mode][0]
     return f0
@@ -191,11 +206,15 @@ def detect_outliers(data):
             outlier_indices.append(i)
     return outlier_indices
 
-if __name__=='__main__':
-    fname = '../data_old/piano_notes/one_octave/A2.wav'
+def f0_from_file(fname):
     fs, x = read(fname)
     x = np.array(x, np.float)
     x /= max(abs(x))
     ton = get_onset(fs, x)
     f0 = get_f0(fs, x[int(ton*fs):int(ton*fs)+2048])
-    print (f0)
+    return os.path.basename(fname), f0
+
+if __name__=='__main__':
+    folder = '/Users/rex/src/melydi/data_old/piano_notes/5_octaves'
+    for fname in os.listdir(folder):
+        print(f0_from_file(os.path.join(folder, fname)))

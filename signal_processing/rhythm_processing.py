@@ -35,19 +35,6 @@ def find_beats(framerate, data, min_separation_time):
     beats = [beat_index/float(d_framerate) for beat_index in beat_indices]
     return beats
 
-def pitch_to_frequency(pitch):
-    note = pitch[:-1]
-    octave = int(pitch[-1])
-    note_order_flats = ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b']
-    note_order_sharps = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
-    try:
-        note_index = note_order_sharps.index(note)
-    except:
-        note_index = note_order_flats.index(note)
-    c1 = 65.4
-    pitch_frequency = c1*2**(octave-1+float(note_index)/12)
-    return pitch_frequency
-
 def pitch_intervals():
     center_frequencies = [c1*2**(octave-1+float(note_index)/12) for note_index in range(12) for octave in range(1,6)]
     lcf = np.log(np.array(center_frequencies))

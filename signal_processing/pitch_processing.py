@@ -30,7 +30,20 @@ def dominant_frequency(framerate, data):
     frequency = peak_index/window_len
     return frequency
 
-def map_pitch(frequency):
+def pitch_to_frequency(pitch):
+    note = pitch[:-1]
+    octave = int(pitch[-1])
+    note_order_flats = ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b']
+    note_order_sharps = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
+    try:
+        note_index = note_order_sharps.index(note)
+    except:
+        note_index = note_order_flats.index(note)
+    c1 = 65.4
+    pitch_frequency = c1*2**(octave-1+float(note_index)/12)
+    return pitch_frequency
+    
+def nearest_pitch(frequency):
     # generate pitch dictionary
     note_order = ['c', ('db', 'c#'), 'd', ('eb', 'd#'), 'e', 'f', ('gb', 'f#'), 'g', ('ab', 'g#'), 'a', ('bb', 'a#'), 'b']
     c1 = 65.4
@@ -157,9 +170,9 @@ def get_peaks(fs, x, threshold=-80):
             # f_peaks.append(freq[i])
             # dBs.append(mY[i])
     # peak_quality(list_of_peaks)
-    plt.plot(freq, mY, 'b.')
-    plt.plot(f_peaks, dBs, 'r+')
-    plt.show()
+    # plt.plot(freq, mY, 'b.')
+    # plt.plot(f_peaks, dBs, 'r+')
+    # plt.show()
     return list_of_peaks, np.array(f_peaks), np.array(dBs)
 
 def newtons_method(f, guess, delta=1e-12, iterations=3):
@@ -173,7 +186,7 @@ def newtons_method(f, guess, delta=1e-12, iterations=3):
 
 def kmeans_f0(list_of_peaks):
     f_peaks = zip(*list_of_peaks)[0]
-    km = KMeans()
+    km = KMeans(n_clusters=4)
     delta_fs = np.array([f_peaks[i+1]-f_peaks[i] for i in range(len(f_peaks)-1)])
     labels = km.fit_predict(delta_fs.reshape(-1, 1))
     # import IPython as ipy; ipy.embed()

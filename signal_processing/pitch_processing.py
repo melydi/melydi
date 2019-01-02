@@ -92,21 +92,25 @@ def spectrum(fs, x, width):
     freq = np.arange(width)[:l2+1]*float(fs)/width
     return freq, mY, pY
 
-lookaround = 5
+LOOKAROUND = 5
 
 def is_local_max(vals, index):
     center_vals = vals[index]
-    local_vals = vals[index-lookaround:index+lookaround]
+    local_vals = vals[index-LOOKAROUND:index+LOOKAROUND]
     return all(vals[index]>=local_vals)
 
 def has_monotomic_slope(vals, index):
-    slopes = vals[index-lookaround+1:index+lookaround+1]-vals[index-lookaround:index+lookaround]
+    slopes = vals[index-LOOKAROUND+1:index+LOOKAROUND]-vals[index-LOOKAROUND:index+LOOKAROUND-1]
     slope_range = abs(np.mean(slopes)) + np.std(slopes)
     slope_buffer = slope_range/10
     return all([slopes[i+1]<slopes[i]+slope_buffer for i in range(len(slopes)-1)])
 
 def is_peak(vals, index):
-    if index<lookaround or index>len(vals)-lookaround-1:
+    """
+    Returns if an index refers to a peak in the data set vals.
+    Uses multiple conditions.
+    """
+    if index<LOOKAROUND or index>len(vals)-LOOKAROUND-1:
         return False
     conditions = [is_local_max, has_monotomic_slope]
     return all([condition(vals, index) for condition in conditions])

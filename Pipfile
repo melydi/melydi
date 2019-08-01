@@ -23,6 +23,8 @@ plotly = "*"
 pygame = "*"
 nbformat = "*"
 "midi2audio" = "*"
+sklearn = "*"
+magenta = "*"
 
 
 [dev-packages]

@@ -10,8 +10,16 @@ from sklearn.cluster import KMeans
 from collections import defaultdict
 
 
-def extract_deltas(note_seq):
-  times = [note.start_time for note in note_seq.notes]
+def extract_deltas(note_seq, num_notes):
+  """
+    Args:
+      note_seq: NoteSequence input
+      num_notes: Number of notes in the note sequence to consider from beginning
+
+    Returns:
+      List of time deltas between notes.
+  """
+  times = [note.start_time for note in note_seq.notes[:num_notes]]
   times = sorted(times)
   deltas = [times[i+1]-times[i] for i in range(len(times)-1)]
   return deltas
@@ -20,6 +28,15 @@ def find_largest_cluster_mean(cluster_to_deltas, cluster_to_size, n_clusters):
   """
   Find the largest cluster, which should correspond to the most frequent note
   value
+
+  Args:
+    cluster_to_deltas: maps cluster index to list of deltas in that cluster
+    cluster_to_size: maps cluster index to cluster size
+    n_clusters: number of clusters
+
+  Returns:
+    Mean of cluster values as a float.
+
   """
   max_cl = 0
   max_size = 0
@@ -30,9 +47,17 @@ def find_largest_cluster_mean(cluster_to_deltas, cluster_to_size, n_clusters):
   cl_mean = np.mean(cluster_to_deltas[max_cl])
   return cl_mean
   
-def find_note_lengths(note_seq, n_diff_lengths=4):
-  
-  deltas = np.array(extract_deltas(note_seq))
+def find_note_lengths(note_seq, num_notes, n_diff_lengths=4):
+  """
+  Args:
+    note_seq: NoteSequence input
+    num_notes: Number of notes in the NoteSequence to consider from beginning
+    n_diff_lengths: How many different notelengths to cluster into
+
+  Returns:
+    List of note_lengths expressed as ints.
+  """
+  deltas = np.array(extract_deltas(note_seq, num_notes))
   kmeans = KMeans(n_clusters=n_diff_lengths, random_state=0).fit(np.array(deltas).reshape(-1, 1))
   cluster_to_deltas = defaultdict(list)
   cluster_to_size = defaultdict(int)
@@ -53,45 +78,77 @@ def find_note_lengths(note_seq, n_diff_lengths=4):
 
 
 def convert_pitch(midi_pitch):
-    offset = 21
-    letter_names = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
-    octave = (midi_pitch-offset)//12
-    letter_name = letter_names[(midi_pitch-offset)-octave*12].lower()
-    return octave, letter_name
+  """
+  Converts midi pitch to letter names with octaves for lilypond.
+
+  Args:
+    midi_pitch: the pitch of a note in midi, expressed as an int
+  
+  Returns:
+    Octave and letter name tuple
+  """
+  offset = 21
+  letter_names = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
+  octave = (midi_pitch-offset)//12
+  letter_name = letter_names[(midi_pitch-offset)-octave*12].lower()
+  return octave, letter_name
   
   
-def get_note_pitch_names(note_seq):
-  notes = [(note.pitch, note.start_time) for note in note_seq.notes]
+def get_note_pitch_names(note_seq, num_notes):
+  """
+  Extracts letter octave pitchesfrom a NoteSequence with midi pitches.
+
+  Args:
+    note_seq: NoteSequence input
+    num_notes: Number of notes in the NoteSequence to consider from beginning
+
+  Returns:
+    List of pitch_name tuples of (octave, letter_name)
+  """
+
+  notes = [(note.pitch, note.start_time) for note in note_seq.notes[:num_notes]]
   
   notes.sort(key=lambda elem: elem[1])
   pitches, _ = zip(*notes)
   
   pitch_names = [convert_pitch(p) for p in pitches]
-  
-  
+    
   return pitch_names
 
 
-def get_note_pitch_names_and_lengths(note_seq):
-  note_pitch_names = get_note_pitch_names(note_seq)
-  note_lengths = find_note_lengths(note_seq)
+def get_note_pitch_names_and_lengths(note_seq, num_notes):
+  """
+  Extracts pitches and note lengths from a NoteSequence object.
+
+  Args:
+    note_seq: NoteSequence input
+    num_notes: Number of notes in the NoteSequence to consider from beginning
+
+  Returns:
+    List of tuples of (note_pitch_name, note_length), where note_pitch_name is a
+      tuple of (note_octave, letter_name)
+
+  """
+  note_pitch_names = get_note_pitch_names(note_seq, num_notes)
+  note_lengths = find_note_lengths(note_seq, num_notes)
   print (note_pitch_names)
   print (note_lengths)
   
   return list(zip(note_pitch_names, note_lengths))
   
-  
-def lilypond_template():
-  
-
-  return header, body, track_format, rhythm_map
 
 
 def note_sequence_to_lilypond_code(notes):
   """
-  Returns lilypond code from a list of note tuples.
-  Each note tuple follows the format ((note_name, note_octave), note_length 
-    (quantized))
+  Produces compilable lilypond code from a list of note tuples.
+
+  Args:
+    notes: List of tuples of (note_pitch_name, note_length), where note_pitch_name is a
+      tuple of (note_octave, letter_name)
+
+  Returns:
+    Lilypond code representing the passed in sequence of notes.
+
   """
 
   HEADER = """
@@ -126,19 +183,37 @@ def note_sequence_to_lilypond_code(notes):
   }}
   """
 
-  RHYTHM_MAP = {0: '0', 1: '8', 2: '4', 3: '4.', 4: '2', 6: '2.', 8: '1'}
-
+  RHYTHM_MAP = {0: '0', 1: '8', 2: '4', 3: '4.', 4: '2', 6: '2.', 8: '1', 12: '1.'}
 
   note_pitches, note_lengths = zip(*notes)
   note_octaves, note_names = zip(*note_pitches)
+
+  print ("Len notes: {}".format(len(notes)))
+  print ("Len note_lengths: {}".format(len(note_lengths)))
+
+  print (max(note_lengths))
+  print (np.unique(np.array(note_lengths)))
+
   notes_string = ' '.join([note_names[i] +RHYTHM_MAP[note_lengths[i]] for i in 
     range(len(notes)) if note_lengths[i] != 0])
   track = TRACK_FORMAT.format(notes_string)
   return HEADER + track + BODY
 
-def convert_midi_to_ly(midi_input_path, ly_output_path):
+def convert_midi_to_ly(midi_input_path, ly_output_path, num_notes=-1):
+  """
+  Given a midi file, produces the score as lilypond_code and saves it to a file.
+
+  Args:
+    midi_input_path: Path to input midi file.
+    ly_output_path: Path to output lilypond code file.
+
+  """
+
   note_seq = midi_io.midi_file_to_note_sequence(midi_input_path)
-  parsed_notes = get_note_pitch_names_and_lengths(note_seq)
+  if num_notes == -1:
+    num_notes = len(note_seq.notes)
+
+  parsed_notes = get_note_pitch_names_and_lengths(note_seq, num_notes)
   lilypond_code = note_sequence_to_lilypond_code(parsed_notes)
   print (lilypond_code)
   with open(ly_output_path, 'w+') as f:
@@ -150,11 +225,12 @@ def main():
   parser.add_argument("-m", "--midi_input_path", help="Absolute or relative path to "
     "midi file to convert to lilypond code", 
     default='../data/midifiles/transcription_alle_voegel.mid')
+  parser.add_argument("-n", "--num_notes", help="Number of notes to convert.", type=int, default=-1)
   parser.add_argument("-s", "--ly_output_path", help="Absolute or relative path "
     "to output text file to store lilypond code", default="output.ly")
   args = parser.parse_args()
 
-  convert_midi_to_ly(args.midi_input_path, args.ly_output_path)
+  convert_midi_to_ly(args.midi_input_path, args.ly_output_path, args.num_notes)
 
 
 if __name__ == '__main__':

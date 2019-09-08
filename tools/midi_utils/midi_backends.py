@@ -11,8 +11,7 @@ for backend in possible_backends:
     except:
         pass
 if not found_backend:
-    print ("Error: could not find valid backend for mido.")
-    exit(1)
+    raise Excetion("Error: could not find valid backend for mido.")
 
 if __name__=='__main__':
     print (mido.get_input_names())

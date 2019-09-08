@@ -9,6 +9,8 @@ from magenta.music import sequences_lib
 from sklearn.cluster import KMeans
 from collections import defaultdict
 
+MIDI_OFFSET = 21
+MIDI_LETTER_NAMES = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
 
 def extract_deltas(note_seq, num_notes):
   """
@@ -92,6 +94,12 @@ def convert_pitch(midi_pitch):
   octave = (midi_pitch-offset)//12
   letter_name = letter_names[(midi_pitch-offset)-octave*12].lower()
   return octave, letter_name
+
+def convert_to_midi_pitch(octave, letter_name):
+  """
+  Converts letter name and octave to midi pitch.
+  """
+  return 12*octave + MIDI_OFFSET + MIDI_LETTER_NAMES.index(letter_name)
   
   
 def get_note_pitch_names(note_seq, num_notes):
@@ -177,7 +185,7 @@ def note_sequence_to_lilypond_code(notes):
   """
 
   TRACK_FORMAT = """
-  notes= \\relative c' {{
+  notes= {{
   {}
   \\bar "|."
   }}
@@ -188,14 +196,19 @@ def note_sequence_to_lilypond_code(notes):
   note_pitches, note_lengths = zip(*notes)
   note_octaves, note_names = zip(*note_pitches)
 
-  print ("Len notes: {}".format(len(notes)))
-  print ("Len note_lengths: {}".format(len(note_lengths)))
+  note_string = ''
 
-  print (max(note_lengths))
-  print (np.unique(np.array(note_lengths)))
+  for i in range(len(notes)):
+    note = notes[i]
+    pitch, length = note
+    octave, name = pitch
 
-  notes_string = ' '.join([note_names[i] +RHYTHM_MAP[note_lengths[i]] for i in 
-    range(len(notes)) if note_lengths[i] != 0])
+    if length==0:
+      continue
+
+    new_note = lilypond_pitch(octave, name) + RHYTHM_MAP[length]
+    note_string += ' ' + new_note
+
   track = TRACK_FORMAT.format(notes_string)
   return HEADER + track + BODY
 

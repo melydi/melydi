@@ -6,7 +6,7 @@
 export PATH="/usr/local/bin:/usr/local/sbin:$PATH"
 brew update
 brew install python3  # Python 3
-sudo pip3 install -U virtualenv  # system-wide install
+pip3 install -U virtualenv  # system-wide install, may require sudo
 ```
 
 ### Create a new virtual environment for this project

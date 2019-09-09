@@ -144,6 +144,13 @@ def get_note_pitch_names_and_lengths(note_seq, num_notes):
   
   return list(zip(note_pitch_names, note_lengths))
   
+def lilypond_pitch(octave, name):
+  lilypond_octave = octave-4
+  if lilypond_octave>=0:
+    suffix = "'"*lilypond_octave
+  else:
+    suffix = ","*abs(lilypond_octave)
+  return name + suffix
 
 
 def note_sequence_to_lilypond_code(notes):
@@ -209,7 +216,7 @@ def note_sequence_to_lilypond_code(notes):
     new_note = lilypond_pitch(octave, name) + RHYTHM_MAP[length]
     note_string += ' ' + new_note
 
-  track = TRACK_FORMAT.format(notes_string)
+  track = TRACK_FORMAT.format(note_string)
   return HEADER + track + BODY
 
 def convert_midi_to_ly(midi_input_path, ly_output_path, num_notes=-1):

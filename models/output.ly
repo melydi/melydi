@@ -2,8 +2,8 @@
   \version "2.16.2"
   \language "english"
   
-  notes= \relative c' {
-  c4. e8 g4 c4 a4 c8 a8 g2 e4 g4 d4 g8 e8 c4 c4 c4
+  notes= {
+   c,4. e,8 g,4 c4 a4 c8 a8 g,2 e,4 g,4 d,4 g,8 e,8 c,4 c,4 c,4
   \bar "|."
   }
   

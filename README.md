@@ -10,6 +10,8 @@ sudo pip3 install -U virtualenv  # system-wide install
 ```
 
 ### Create a new virtual environment for this project
+We recommend that you run this from the root directory of this repo.
+It will create a venv directory in your working directory.
 ```sh
 virtualenv --system-site-packages -p python3 ./venv
 ```

@@ -1,0 +1,17 @@
+clocks_per_click
+denominator
+frame_rate
+frames
+hours
+key
+minutes
+name
+notated_32nd_notes_per_beat
+numerator
+port
+seconds
+sub_frames
+tempo
+text
+time
+type
